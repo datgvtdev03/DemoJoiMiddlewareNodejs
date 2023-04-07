@@ -1,6 +1,9 @@
 const express = require('express');
 const app = express();
 const Joi = require('joi');
+const rateLimit = require('express-rate-limit')
+
+const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
@@ -34,6 +37,15 @@ const loginSchema = Joi.object({
   }),
 })
 
+const createAccountLimiter = rateLimit({
+	windowMs: 1 * 60 * 1000, // 1 hour
+	max: 5,
+	message:
+		'Quá nhiều tài khoản được tạo từ IP này, vui lòng thử lại sau một giờ',
+	standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+	legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+})
+
 // Middleware xử lý đăng nhập
 const loginMiddleware = (req, res, next) => {
   const { error } = loginSchema.validate(req.body);
@@ -48,6 +60,7 @@ const loginMiddleware = (req, res, next) => {
   }
   req.user = user;
   next();
+  // return res.redirect('/admin')
 };
 
 
@@ -59,7 +72,7 @@ const isAdmin = (req, res, next) => {
   next();
 };
 
-app.post('/login', loginMiddleware, isAdmin, (req, res) => {
+app.post('/login',createAccountLimiter, loginMiddleware, isAdmin, (req, res) => {
   res.redirect('/admin')
 });
 
@@ -68,6 +81,6 @@ app.get('/admin', (req, res) => {
 });
 
 
-app.listen(3000, () => {
-  console.log('Server is running on port 3000');
+app.listen(port, () => {
+  console.log('Server đang chạy cổng: ', port);
 });
