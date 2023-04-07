@@ -1,9 +1,36 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit')
+const Joi = require('joi');
 const app = express();
 const port = 3000;
 
 app.use(express.json());
+
+
+const schemaLogin = Joi.object({
+  username: Joi.string()
+  .min(3)
+  .max(30)
+  .required()
+  .messages({
+    'string.base': `"username" should be a type of 'text'`,
+    'string.empty': `"username" cannot be an empty field`,
+    'string.min': `"username" should have a minimum length of {#limit}`,
+    'any.required': `"username" is a required field`
+  }),
+
+  password: Joi.string()
+  .min(3)
+  .max(30)
+  .pattern(new RegExp('^[a-zA-Z0-9]{3,30}$'))
+  .required()
+  .messages({
+    'string.empty': `"password" cannot be an empty field`,
+    'string.min': `"password" should have a minimum length of {#limit}`,
+    'any.required': `"password" is a required field`
+  }),
+})
+
 
 const createAccountLimiter = rateLimit({
 	windowMs: 60 * 60 * 1000, // 1 hour
